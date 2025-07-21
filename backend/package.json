@@ -20,11 +20,13 @@
     "typescript": "^5"
   },
   "dependencies": {
+    "@hono/zod-validator": "^0.7.2",
     "bcryptjs": "^3.0.2",
     "dotenv": "^17.2.0",
     "hono": "^4.8.5",
     "jsonwebtoken": "^9.0.2",
     "knex": "^3.1.0",
-    "pg": "^8.16.3"
+    "pg": "^8.16.3",
+    "zod": "^4.0.5"
   }
 }
