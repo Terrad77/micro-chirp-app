@@ -4,8 +4,26 @@ import knex from "../../../db";
 import { hashPassword, comparePassword, generateToken } from "../../utils/auth";
 import { type AppEnv } from "../../types/appEnv";
 import { logger } from "../../utils/logger";
+import { v4 as uuidv4 } from "uuid";
 
 const auth = new Hono<AppEnv>();
+
+// middleware for unique REQUEST ID
+auth.use("*", async (c, next) => {
+  const requestId = uuidv4();
+  console.log("CHIRPS ROUTER MIDDLEWARE: Generated requestId:", requestId);
+
+  c.set("requestId", requestId);
+  logger.debug("Request received in auth router", {
+    requestId,
+    path: c.req.path,
+  });
+  await next();
+  logger.debug("Request processed in auth router", {
+    requestId,
+    status: c.res.status,
+  });
+});
 
 // Схема валідації для реєстрації та логіна
 const registerSchema = z.object({
@@ -83,6 +101,7 @@ auth.post("/login", async (c: Context<AppEnv>) => {
   const body = await c.req.json();
   const result = registerSchema.safeParse(body);
   const requestId = c.get("requestId") || "N/A";
+  console.log("AUTH LOGIN ROUTE: requestId before log:", requestId);
 
   if (!result.success) {
     logger.warn("Validation error during user login", {

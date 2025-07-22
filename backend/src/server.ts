@@ -26,15 +26,15 @@ app.use(
   })
 );
 
-// Middleware для додавання Request ID
-app.use(async (c, next) => {
-  const requestId = uuidv4();
+// global Middleware for add Request ID
+// app.use(async (c, next) => {
+//   const requestId = uuidv4();
 
-  c.set("requestId", requestId);
-  logger.debug("Request received", { requestId, path: c.req.path });
-  await next();
-  logger.debug("Request processed", { requestId, status: c.res.status });
-});
+//   c.set("requestId", requestId);
+//   logger.debug("Request received", { requestId, path: c.req.path });
+//   await next();
+//   logger.debug("Request processed", { requestId, status: c.res.status });
+// });
 
 // Middleware for adding instance of Knex to Hono context (optional)
 app.use(async (c, next) => {
