@@ -1,25 +1,35 @@
-import { Hono } from "hono";
-import { zValidator } from "@hono/zod-validator";
-import { z } from "zod"; //  bun add zod @hono/zod-validator
-import knex from "../../../db"; // import instance of Knex
+import { Hono, type Context } from "hono";
+import { z } from "zod";
+import knex from "../../../db";
 import { hashPassword, comparePassword, generateToken } from "../../utils/auth";
+import { type AppEnv } from "../../types/appEnv";
 
-const auth = new Hono();
+const auth = new Hono<AppEnv>();
 
-// Schema validation for registration new user
+// Схема валидации для регистрации и логина
 const registerSchema = z.object({
   username: z.string().min(3).max(50),
   password: z.string().min(8).max(100),
 });
 
-// Route for registration
-auth.post("/register", zValidator("json", registerSchema), async (c) => {
-  const { username, password } = c.req.valid("json");
+// Регистрация
+auth.post("/register", async (c: Context<AppEnv>) => {
+  const body = await c.req.json();
+  const result = registerSchema.safeParse(body);
+
+  if (!result.success) {
+    return c.json(
+      { message: "Validation error", errors: result.error.errors },
+      400
+    );
+  }
+
+  const { username, password } = result.data;
 
   try {
     const existingUser = await knex("users").where({ username }).first();
     if (existingUser) {
-      return c.json({ message: "User already exists" }, 409); // Conflict
+      return c.json({ message: "User already exists" }, 409);
     }
 
     const password_hash = await hashPassword(password);
@@ -33,29 +43,39 @@ auth.post("/register", zValidator("json", registerSchema), async (c) => {
     return c.json(
       { message: "User registered successfully", token, userId: userId.id },
       201
-    ); // Created
+    );
   } catch (error: any) {
     console.error("Registration error:", error);
     return c.json(
       { message: "Server error during registration", error: error.message },
       500
-    ); // Internal Server Error
+    );
   }
 });
 
-// Route for login
-auth.post("/login", zValidator("json", registerSchema), async (c) => {
-  const { username, password } = c.req.valid("json");
+// Логин
+auth.post("/login", async (c: Context<AppEnv>) => {
+  const body = await c.req.json();
+  const result = registerSchema.safeParse(body);
+
+  if (!result.success) {
+    return c.json(
+      { message: "Validation error", errors: result.error.errors },
+      400
+    );
+  }
+
+  const { username, password } = result.data;
 
   try {
     const user = await knex("users").where({ username }).first();
     if (!user) {
-      return c.json({ message: "Invalid credentials" }, 401); // Unauthorized
+      return c.json({ message: "Invalid credentials" }, 401);
     }
 
     const isPasswordValid = await comparePassword(password, user.password_hash);
     if (!isPasswordValid) {
-      return c.json({ message: "Invalid credentials" }, 401); // Unauthorized
+      return c.json({ message: "Invalid credentials" }, 401);
     }
 
     const token = generateToken(user.id);
