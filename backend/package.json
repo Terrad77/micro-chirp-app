@@ -1,14 +1,13 @@
 {
   "name": "backend",
-  "module": "index.ts",
   "type": "module",
   "private": true,
   "scripts": {
     "dev": "bun --hot src/server.ts",
-    "start": "bun src/server.ts",
-    "build": "tsc",
-    "migrate:latest": "bunx knex --knexfile knexfile.cjs migrate:latest",
-    "migrate:rollback": "bunx knex --knexfile knexfile.cjs migrate:rollback"
+    "build": "bun tsc -p tsconfig.build.json",
+    "start": "bun dist/server.js",
+    "migrate:latest": "bunx knex --knexfile knexfile.js migrate:latest",
+    "migrate:rollback": "bunx knex --knexfile knexfile.js migrate:rollback"
   },
   "devDependencies": {
     "@hono/node-server": "^1.17.1",

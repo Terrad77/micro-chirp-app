@@ -1,7 +1,5 @@
 import Knex from "knex";
-import knexConfig from "../knexfile.cjs";
-
+import knexConfig from "../../knexfile.js";
 // configure Knex with the development settings
-const knex = Knex(knexConfig.development!);
-
+const knex = Knex(knexConfig.development);
 export default knex;

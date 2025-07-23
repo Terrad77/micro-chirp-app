@@ -31,10 +31,16 @@ function formatLog(level: LogLevel, message: string, options?: LogOptions) {
     const context = options?.context ? `[${options.context}]` : "";
     const reqId = options?.requestId ? `[ReqID: ${options.requestId}]` : "";
     const usrId = options?.userId ? `[UserID: ${options.userId}]` : "";
-    console.log(
-      `[${timestamp}] ${level} ${context} ${reqId} ${usrId} - ${message}`,
-      options
-    );
+
+    const baseLogMessage = `[${timestamp}] ${level} ${context} ${reqId} ${usrId} - ${message}`;
+
+    if (options && Object.keys(options).length > 0) {
+      // Якщо є опції, виводимо їх як другий аргумент
+      console.log(baseLogMessage, options);
+    } else {
+      // Якщо опцій немає або вони порожні, виводимо тільки базове повідомлення
+      console.log(baseLogMessage);
+    }
   }
 }
 

@@ -1,6 +1,6 @@
 import { Hono, type Context } from "hono";
 import { z } from "zod";
-import knex from "../../../db";
+import { getKnexInstance } from "../../db";
 import { hashPassword, comparePassword, generateToken } from "../../utils/auth";
 import { type AppEnv } from "../../types/appEnv";
 import { logger } from "../../utils/logger";
@@ -25,13 +25,13 @@ auth.use("*", async (c, next) => {
   });
 });
 
-// Схема валідації для реєстрації та логіна
+// Schema validation for registration and login
 const registerSchema = z.object({
   username: z.string().min(3).max(50),
   password: z.string().min(8).max(100),
 });
 
-// Реєстрація
+// REgistration route
 auth.post("/register", async (c: Context<AppEnv>) => {
   const body = await c.req.json();
   const result = registerSchema.safeParse(body);
@@ -52,6 +52,7 @@ auth.post("/register", async (c: Context<AppEnv>) => {
   }
 
   const { username, password } = result.data;
+  const knex = getKnexInstance(); // Get Knex instance from context
 
   try {
     const existingUser = await knex("users").where({ username }).first();
@@ -96,7 +97,7 @@ auth.post("/register", async (c: Context<AppEnv>) => {
   }
 });
 
-// Логін
+// ЛLogin route
 auth.post("/login", async (c: Context<AppEnv>) => {
   const body = await c.req.json();
   const result = registerSchema.safeParse(body);
@@ -117,6 +118,7 @@ auth.post("/login", async (c: Context<AppEnv>) => {
   }
 
   const { username, password } = result.data;
+  const knex = getKnexInstance(); // Get Knex instance from context
 
   try {
     const user = await knex("users").where({ username }).first();

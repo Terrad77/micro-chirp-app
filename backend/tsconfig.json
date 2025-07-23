@@ -7,6 +7,9 @@
     "moduleDetection": "force",
     "jsx": "react-jsx",
     "allowJs": true,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "rootDir": "./src",
 
     // Bundler mode
     "moduleResolution": "bundler",

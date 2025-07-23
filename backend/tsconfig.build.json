@@ -1,0 +1,16 @@
+{
+  "extends": "./tsconfig.json", // Inherit base settings
+  "compilerOptions": {
+    "noEmit": false, // allow compiling to JS
+    "outDir": "./dist", // Output folder for compiled JS files
+    "module": "ESNext",
+    "moduleResolution": "node",
+    "rootDir": "./src", // root TS files
+    "noUnusedLocals": true, //for production
+    "noUnusedParameters": true, // for production
+    "allowImportingTsExtensions": false // no import .ts files
+  },
+  "include": [], // empty because use 'files'
+  "files": ["src/server.ts"],
+  "exclude": ["node_modules", "dist"]
+}

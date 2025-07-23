@@ -2,7 +2,7 @@ import { Hono, type Context } from "hono";
 import { z } from "zod";
 import { authMiddleware } from "../../middleware/auth";
 import { type AppEnv } from "../../types/appEnv";
-import knex from "../../../db";
+import { getKnexInstance } from "../../db";
 import { logger } from "../../utils/logger";
 import { v4 as uuidv4 } from "uuid";
 
@@ -72,7 +72,7 @@ chirps.post("/", authMiddleware, async (c: Context<AppEnv>) => {
 
   const { content } = result.data; // Extract content from validated data
 
-  // additional check for userId presence -переревірка повинна бути зайвою, якщо authMiddleware спрацювала
+  // additional check for userId presence
   if (!userId) {
     logger.error(
       "Unauthorized: User ID not found after authMiddleware",
@@ -84,7 +84,7 @@ chirps.post("/", authMiddleware, async (c: Context<AppEnv>) => {
     );
     return c.json({ message: "Unauthorized: User ID not found" }, 401);
   }
-
+  const knex = getKnexInstance();
   try {
     const [chirp] = await knex("chirps")
       .insert({ user_id: userId, content })
@@ -135,7 +135,7 @@ chirps.get("/", async (c: Context<AppEnv>) => {
 
   const { page, limit } = parsedParams.data;
   const offset = (page - 1) * limit;
-
+  const knex = getKnexInstance();
   try {
     // Отримуємо загальну кількість чирпів
     const [totalChirpsResult] = await knex("chirps").count("* as count");
@@ -222,6 +222,7 @@ chirps.get("/user/:userId", async (c: Context<AppEnv>) => {
 
   const { page, limit } = parsedParams.data;
   const offset = (page - 1) * limit;
+  const knex = getKnexInstance();
 
   try {
     // Отримуємо загальну кількість чирпів для конкретного користувача
