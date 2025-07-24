@@ -1,14 +1,13 @@
 import { Hono, type Context } from "hono";
-import { serve } from "@hono/node-server";
 import { config } from "dotenv";
 import { getKnexInstance } from "./db";
 import authRoutes from "./api/auth";
 import chirpsRoutes from "./api/chirps";
-import { cors } from "hono/cors";
 import { type AppEnv } from "./types/appEnv";
 import { logger } from "./utils/logger";
 import path from "path";
 import { fileURLToPath } from "url";
+import { v4 as uuidv4 } from "uuid";
 
 // Get the current directory of the file (__dirname для ESM)
 const __filename = fileURLToPath(import.meta.url); // Convert the file URL to a path
@@ -44,15 +43,40 @@ if (!frontendUrl) {
 const app = new Hono<AppEnv>();
 
 // Middleware CORS, for cross-origin requests frontend to backend
-app.use(
-  cors({
-    origin: corsOrigin, // frontend address
-    allowHeaders: ["Content-Type", "Authorization", "X-Request-ID"],
-    exposeHeaders: ["X-Request-ID"], // expose custom headers to frontend
-    allowMethods: ["POST", "GET", "OPTIONS"],
-    credentials: true,
-  })
-);
+app.use("*", async (c, next) => {
+  // заголовки для OPTIONS запитів (preflight)
+  if (c.req.method === "OPTIONS") {
+    c.header("Access-Control-Allow-Origin", "http://localhost:3002");
+    c.header("Access-Control-Allow-Methods", "POST, GET, OPTIONS");
+    c.header(
+      "Access-Control-Allow-Headers",
+      "Content-Type, Authorization, X-Request-ID"
+    );
+    c.header("Access-Control-Max-Age", "86400"); // Кешувати preflight відповідь на 24 години
+    c.header("Access-Control-Allow-Credentials", "false"); // не використовує куки/сертифікати
+
+    return c.text("", 204); // Повертаємо 204 No Content для OPTIONS
+  }
+
+  // Додаємо заголовки для всіх інших запитів
+  c.header("Access-Control-Allow-Origin", "http://localhost:3002");
+  c.header("Access-Control-Allow-Credentials", "false");
+
+  await next();
+});
+
+// Middleware для додавання Request ID до контексту
+app.use(async (c, next) => {
+  const requestId = uuidv4();
+  c.set("requestId", requestId); // Встановлюємо requestId у контекст Hono
+  logger.info(
+    `Incoming Request - Method: ${c.req.method}, Path: ${c.req.path}, RequestId: ${requestId}`
+  );
+  await next();
+  logger.info(
+    `Outgoing Response - Method: ${c.req.method}, Path: ${c.req.path}, RequestId: ${requestId}, Status: ${c.res.status}`
+  );
+});
 
 // Middleware for adding instance of Knex to Hono context (optional)
 app.use(async (c, next) => {
@@ -64,7 +88,7 @@ app.use(async (c, next) => {
 app.get("/", async (c: Context<AppEnv>) => {
   const requestId = c.get("requestId") || "N/A";
   try {
-    const result = await knex.raw("SELECT 1+1 AS result");
+    const result = await knex.raw("SELECT 1+1 AS result"); // simple query to test DB connection
     logger.info("Health check successful", {
       context: "server.get:/",
       requestId,
@@ -91,9 +115,10 @@ app.route("/api/auth", authRoutes);
 app.route("/api/chirps", chirpsRoutes);
 
 const port = parseInt(process.env.BACKEND_PORT || "3001", 10); // definition second argument- radix as 10 for decimal interpretation string to number
-logger.info(`Server is running on port ${port}`);
+logger.info(`BACKEND Server is running on port ${port}`);
 
-serve({
+// use Bun.serve замість @hono/node-server
+Bun.serve({
   fetch: app.fetch,
   port,
 });

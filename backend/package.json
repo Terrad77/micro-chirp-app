@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "bun --hot src/server.ts",
-    "build": "bun tsc -p tsconfig.build.json",
+    "build": "bun x tsc -p tsconfig.build.json",
     "start": "bun dist/server.js",
     "migrate:latest": "bunx knex --knexfile knexfile.js migrate:latest",
     "migrate:rollback": "bunx knex --knexfile knexfile.js migrate:rollback"

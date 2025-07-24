@@ -9,21 +9,21 @@ import { v4 as uuidv4 } from "uuid";
 const auth = new Hono<AppEnv>();
 
 // middleware for unique REQUEST ID
-auth.use("*", async (c, next) => {
-  const requestId = uuidv4();
-  console.log("CHIRPS ROUTER MIDDLEWARE: Generated requestId:", requestId);
+// auth.use("*", async (c, next) => {
+//   const requestId = uuidv4();
+//   console.log("CHIRPS ROUTER MIDDLEWARE: Generated requestId:", requestId);
 
-  c.set("requestId", requestId);
-  logger.debug("Request received in auth router", {
-    requestId,
-    path: c.req.path,
-  });
-  await next();
-  logger.debug("Request processed in auth router", {
-    requestId,
-    status: c.res.status,
-  });
-});
+//   c.set("requestId", requestId);
+//   logger.debug("Request received in auth router", {
+//     requestId,
+//     path: c.req.path,
+//   });
+//   await next();
+//   logger.debug("Request processed in auth router", {
+//     requestId,
+//     status: c.res.status,
+//   });
+// });
 
 // Schema validation for registration and login
 const registerSchema = z.object({
@@ -97,7 +97,7 @@ auth.post("/register", async (c: Context<AppEnv>) => {
   }
 });
 
-// ЛLogin route
+// Login route
 auth.post("/login", async (c: Context<AppEnv>) => {
   const body = await c.req.json();
   const result = registerSchema.safeParse(body);
