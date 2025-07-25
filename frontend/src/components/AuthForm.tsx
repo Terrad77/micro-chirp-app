@@ -3,13 +3,14 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useMutation } from "@tanstack/react-query";
-import api from "@/lib/api"; // for API requests
+import api from "@/lib/api";
 import { AxiosError } from "axios";
 import { z } from "zod"; // for schema validation
 import { toFormikValidationSchema } from "zod-formik-adapter"; // for converting Zod schema to Formik validation schema
-import { useFormik } from "formik"; // for managing form state
+import { useFormik } from "formik";
+import Link from "next/link";
 
-// Типизація для даних форми (= backend Schema validation for registration and login in auth/index.ts)
+// Type for form values (= backend Schema validation for registration and login in auth/index.ts)
 const authSchema = z.object({
   username: z
     .string()
@@ -27,19 +28,19 @@ interface AuthFormProps {
   type: "register" | "login";
 }
 
-// Інтерфейс для типової відповіді помилки з бекенду
+// Interface for backend error response
 interface BackendErrorResponse {
   message: string;
-  // Якщо бекенд повертає більше полів при помилці:
-  // code?: string;
-  // details?: string[];
+  // if backend returns additional error details
+  code?: string;
+  details?: string[];
 }
 
 export function AuthForm({ type }: AuthFormProps) {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
 
-  // Використовуємо useMutation для відправки даних на бекенд
+  // use useMutation for sending data to the backend
   const { mutate, isPending } = useMutation({
     mutationFn: async (values: AuthFormValues) => {
       const endpoint =
@@ -48,11 +49,11 @@ export function AuthForm({ type }: AuthFormProps) {
       return response.data;
     },
     onSuccess: (data) => {
-      // При успішному логіні/реєстрації зберігаємо токен
+      // successful response handling for login/register
       if (data.token) {
-        localStorage.setItem("authToken", data.token);
+        localStorage.setItem("authToken", data.token); // Save token to localStorage
       }
-      // Перенаправляємо на головну сторінку
+      // redirect to home page
       router.push("/");
     },
     onError: (err: AxiosError<BackendErrorResponse>) => {
@@ -67,7 +68,7 @@ export function AuthForm({ type }: AuthFormProps) {
     },
     validationSchema: toFormikValidationSchema(authSchema),
     onSubmit: (values) => {
-      setError(null); // Скидаємо попередні помилки
+      setError(null); // Clear errors
       mutate(values);
     },
   });
@@ -143,6 +144,21 @@ export function AuthForm({ type }: AuthFormProps) {
                 ? "Register"
                 : "Login"}
             </button>
+            {type === "login" ? (
+              <Link
+                href="/register"
+                className="inline-block align-baseline font-bold text-sm text-blue-500 hover:text-blue-800"
+              >
+                Don't have an account? Register!
+              </Link>
+            ) : (
+              <Link
+                href="/login"
+                className="inline-block align-baseline font-bold text-sm text-blue-500 hover:text-blue-800"
+              >
+                Already have an account? Login!
+              </Link>
+            )}
           </div>
         </form>
       </div>

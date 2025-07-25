@@ -9,21 +9,21 @@ import { v4 as uuidv4 } from "uuid";
 const auth = new Hono<AppEnv>();
 
 // middleware for unique REQUEST ID
-// auth.use("*", async (c, next) => {
-//   const requestId = uuidv4();
-//   console.log("CHIRPS ROUTER MIDDLEWARE: Generated requestId:", requestId);
+auth.use("*", async (c, next) => {
+  const requestId = uuidv4();
+  console.log("CHIRPS ROUTER MIDDLEWARE: Generated requestId:", requestId);
 
-//   c.set("requestId", requestId);
-//   logger.debug("Request received in auth router", {
-//     requestId,
-//     path: c.req.path,
-//   });
-//   await next();
-//   logger.debug("Request processed in auth router", {
-//     requestId,
-//     status: c.res.status,
-//   });
-// });
+  c.set("requestId", requestId);
+  logger.debug("Request received in auth router", {
+    requestId,
+    path: c.req.path,
+  });
+  await next();
+  logger.debug("Request processed in auth router", {
+    requestId,
+    status: c.res.status,
+  });
+});
 
 // Schema validation for registration and login
 const registerSchema = z.object({
@@ -71,8 +71,8 @@ auth.post("/register", async (c: Context<AppEnv>) => {
       .insert({ username, password_hash })
       .returning("id");
 
-    const token = generateToken(userId.id);
-    // Log successful registration
+    const token = generateToken(userId.id, username);
+
     logger.info("User registered successfully", {
       context: "auth.register",
       requestId,
@@ -80,7 +80,12 @@ auth.post("/register", async (c: Context<AppEnv>) => {
       username,
     });
     return c.json(
-      { message: "User registered successfully", token, userId: userId.id },
+      {
+        message: "User registered successfully",
+        token,
+        userId: userId.id,
+        username,
+      },
       201
     );
   } catch (error: any) {
@@ -142,7 +147,7 @@ auth.post("/login", async (c: Context<AppEnv>) => {
       return c.json({ message: "Invalid credentials" }, 401);
     }
 
-    const token = generateToken(user.id);
+    const token = generateToken(user.id, user.username);
 
     logger.info("User logged in successfully", {
       context: "auth.login",
@@ -152,7 +157,7 @@ auth.post("/login", async (c: Context<AppEnv>) => {
     });
 
     return c.json(
-      { message: "Logged in successfully", token, userId: user.id },
+      { message: "Logged in successfully", token, userId: user.id, username },
       200
     );
   } catch (error: any) {

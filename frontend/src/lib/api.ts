@@ -1,7 +1,8 @@
 import axios from "axios";
 
 // Base URL for the API requests
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
+const API_BASE_URL =
+  process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api";
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -14,7 +15,6 @@ const api = axios.create({
 api.interceptors.request.use(
   (config) => {
     // get token from localStorage
-    // для безпеки в продакшн-додатках краще використовувати HttpOnly Cookies або інші механізми
     const token = localStorage.getItem("authToken");
 
     // checking if token exists and adding it to the headers
@@ -30,16 +30,21 @@ api.interceptors.request.use(
   }
 );
 
-// Інтерцептор для обробки помилок відповіді (наприклад, 401 Unauthorized)
+// Interceptor for handling response errors
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    // Якщо отримано 401 (Unauthorized) і це не маршрути логіну/реєстрації
-    if (error.response && error.response.status === 401) {
-      // Можна додати логіку для виходу користувача:
-      // localStorage.removeItem('authToken');
-      // window.location.href = '/login'; // Перенаправити на сторінку логіну
-      console.warn("Unauthorized request. You might need to log in again.");
+    // If 401 (Unauthorized) error is received and it's not a login/register route
+    // (We explicitly check for originalRequest.url to not be auth routes to prevent redirect loops)
+    const isAuthRoute =
+      error.config.url.endsWith("/auth/login") ||
+      error.config.url.endsWith("/auth/register");
+
+    if (error.response && error.response.status === 401 && !isAuthRoute) {
+      console.warn("Unauthorized request. Logging out user.");
+      // Clear token and redirect to login page
+      localStorage.removeItem("authToken");
+      window.location.href = "/login"; // Force reload to trigger client-side auth check
     }
     return Promise.reject(error);
   }

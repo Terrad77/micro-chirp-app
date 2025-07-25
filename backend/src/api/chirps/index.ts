@@ -147,7 +147,7 @@ chirps.get("/", async (c: Context<AppEnv>) => {
 
     const allChirps = await knex("chirps")
       .join("users", "chirps.user_id", "users.id")
-      .select("chirps.*", "users.username")
+      .select("chirps.*", "users.username as author_username")
       .orderBy("chirps.created_at", "desc")
       .limit(limit)
       .offset(offset);
