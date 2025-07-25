@@ -1,7 +1,8 @@
 import type { Context, Next } from "hono";
 import { verifyToken } from "../utils/auth";
+import { type AppEnv } from "../types/appEnv";
 
-export const authMiddleware = async (c: Context, next: Next) => {
+export const authMiddleware = async (c: Context<AppEnv>, next: Next) => {
   const authHeader = c.req.header("Authorization");
   console.log("Auth header:", authHeader); // Log the auth header
 
@@ -26,8 +27,8 @@ export const authMiddleware = async (c: Context, next: Next) => {
   }
 
   // add userId to request object for access in routes
-  c.req.userId = decodedToken.id;
-  c.req.username = decodedToken.username;
+  c.set("userId", decodedToken.id);
+  c.set("username", decodedToken.username);
 
   await next();
 };

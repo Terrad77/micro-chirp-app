@@ -8,6 +8,7 @@ import { logger } from "./utils/logger";
 import path from "path";
 import { fileURLToPath } from "url";
 import { v4 as uuidv4 } from "uuid";
+import { cors } from "hono/cors";
 
 // Get the current directory of the file (__dirname для ESM)
 const __filename = fileURLToPath(import.meta.url); // Convert the file URL to a path
@@ -42,28 +43,38 @@ if (!frontendUrl) {
 // initialize Hono instance with custom AppEnv type
 const app = new Hono<AppEnv>();
 
-// Middleware CORS, for cross-origin requests frontend to backend
-app.use("*", async (c, next) => {
-  // заголовки для OPTIONS запитів (preflight)
-  if (c.req.method === "OPTIONS") {
-    c.header("Access-Control-Allow-Origin", "http://localhost:3002");
-    c.header("Access-Control-Allow-Methods", "POST, GET, OPTIONS");
-    c.header(
-      "Access-Control-Allow-Headers",
-      "Content-Type, Authorization, X-Request-ID"
-    );
-    c.header("Access-Control-Max-Age", "86400"); // Кешувати preflight відповідь на 24 години
-    c.header("Access-Control-Allow-Credentials", "false"); // не використовує куки/сертифікати
+// custom Middleware CORS, for cross-origin requests frontend to backend
+// app.use("*", async (c, next) => {
+//   // заголовки для OPTIONS запитів (preflight)
+//   if (c.req.method === "OPTIONS") {
+//     c.header("Access-Control-Allow-Origin", "http://localhost:3002");
+//     c.header("Access-Control-Allow-Methods", "POST, GET, OPTIONS");
+//     c.header(
+//       "Access-Control-Allow-Headers",
+//       "Content-Type, Authorization, X-Request-ID"
+//     );
+//     c.header("Access-Control-Max-Age", "86400"); // Кешувати preflight відповідь на 24 години
+//     c.header("Access-Control-Allow-Credentials", "false"); // не використовує куки/сертифікати
 
-    return c.text("", 204); // Повертаємо 204 No Content для OPTIONS
-  }
+//     return c.text("", 204); // Повертаємо 204 No Content для OPTIONS
+//   }
 
-  // Додаємо заголовки для всіх інших запитів
-  c.header("Access-Control-Allow-Origin", "http://localhost:3002");
-  c.header("Access-Control-Allow-Credentials", "false");
+//   // Додаємо заголовки для всіх інших запитів
+//   c.header("Access-Control-Allow-Origin", "http://localhost:3002");
+//   c.header("Access-Control-Allow-Credentials", "false");
 
-  await next();
-});
+//   await next();
+// });
+
+//Hono CORS middleware
+app.use(
+  cors({
+    origin: corsOrigin, // Використовуємо змінну corsOrigin
+    credentials: true, // Важливо для передачі куків (JWT токена)
+    allowMethods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"], // Дозволені методи
+    allowHeaders: ["Content-Type", "Authorization", "X-Request-ID"], // Дозволені заголовки
+  })
+);
 
 // Middleware для додавання Request ID до контексту
 app.use(async (c, next) => {

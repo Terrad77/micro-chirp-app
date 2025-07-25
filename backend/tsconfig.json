@@ -29,11 +29,6 @@
     "noUnusedParameters": false,
     "noPropertyAccessFromIndexSignature": false
   },
-  "include": [
-    "src/**/*.ts",
-    "src/**/*.d.ts",
-    "src/types/**/*.d.ts",
-    "src/types/**/*.ts"
-  ],
+  "include": ["src/**/*.ts", "src/**/*.d.ts", "src/types/**/*.ts"],
   "exclude": ["node_modules", "dist"]
 }

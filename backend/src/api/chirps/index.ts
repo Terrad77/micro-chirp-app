@@ -55,7 +55,8 @@ chirps.post("/", authMiddleware, async (c: Context<AppEnv>) => {
   const body = await c.req.json();
   const result = createChirpSchema.safeParse(body);
   const requestId = c.get("requestId") || "N/A"; // request ID for logging
-  const userId = c.req.userId!;
+  const userId = c.get("userId");
+  const username = c.get("username");
 
   if (!result.success) {
     logger.warn("Validation error during chirp creation", {
@@ -87,7 +88,7 @@ chirps.post("/", authMiddleware, async (c: Context<AppEnv>) => {
   const knex = getKnexInstance();
   try {
     const [chirp] = await knex("chirps")
-      .insert({ user_id: userId, content })
+      .insert({ user_id: userId, content, username: username })
       .returning("*");
     logger.info("Chirp created successfully", {
       context: "chirps.post",
