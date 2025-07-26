@@ -1,6 +1,6 @@
 import { Hono, type Context } from "hono";
 import { config } from "dotenv";
-import { getKnexInstance } from "./db";
+import knex from "./db";
 import authRoutes from "./api/auth";
 import chirpsRoutes from "./api/chirps";
 import { type AppEnv } from "./types/appEnv";
@@ -19,9 +19,6 @@ const projectRoot = path.resolve(__dirname, "../../");
 
 // download environment variables from .env file
 config({ path: path.join(projectRoot, ".env") }); // absolute path to .env file
-
-// Initialize Knex after loading .env ---
-const knex = getKnexInstance();
 
 // checking existence FRONTEND_URL
 const frontendUrl = process.env.FRONTEND_URL;

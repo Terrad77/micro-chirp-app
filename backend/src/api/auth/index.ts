@@ -1,6 +1,6 @@
 import { Hono, type Context } from "hono";
 import { z } from "zod";
-import { getKnexInstance } from "../../db";
+import knex from "../../db";
 import { hashPassword, comparePassword, generateToken } from "../../utils/auth";
 import { type AppEnv } from "../../types/appEnv";
 import { logger } from "../../utils/logger";
@@ -52,7 +52,6 @@ auth.post("/register", async (c: Context<AppEnv>) => {
   }
 
   const { username, password } = result.data;
-  const knex = getKnexInstance(); // Get Knex instance from context
 
   try {
     const existingUser = await knex("users").where({ username }).first();
@@ -123,7 +122,6 @@ auth.post("/login", async (c: Context<AppEnv>) => {
   }
 
   const { username, password } = result.data;
-  const knex = getKnexInstance(); // Get Knex instance from context
 
   try {
     const user = await knex("users").where({ username }).first();
