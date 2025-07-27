@@ -123,17 +123,17 @@ app.route("/api/auth", authRoutes);
 app.route("/api/chirps", chirpsRoutes);
 
 // Start the server on specified port
-const port = parseInt(
-  process.env.PORT || process.env.BACKEND_PORT || "3001",
-  10
-); // definition second argument- radix as 10 for decimal interpretation string to number
-logger.info(`BACKEND Server is running on port ${port}`);
+// const port = parseInt(
+//   process.env.PORT || process.env.BACKEND_PORT || "3001",
+//   10
+// ); // definition second argument- radix as 10 for decimal interpretation string to number
+// logger.info(`BACKEND Server is running on port ${port}`);
 
 // use Bun.serve замість @hono/node-server
-Bun.serve({
-  fetch: app.fetch,
-  port,
-});
+// Bun.serve({
+//   fetch: app.fetch,
+//   port,
+// });
 
 process.on("SIGINT", async () => {
   logger.info("Closing database connection...");
