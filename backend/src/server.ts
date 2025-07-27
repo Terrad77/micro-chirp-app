@@ -8,7 +8,7 @@ import { logger } from "./utils/logger";
 import path from "path";
 import { fileURLToPath } from "url";
 import { v4 as uuidv4 } from "uuid";
-import { cors } from "hono/cors";
+// import { cors } from "hono/cors";
 
 // Get the current directory of the file (__dirname для ESM)
 const __filename = fileURLToPath(import.meta.url); // Convert the file URL to a path
@@ -42,37 +42,41 @@ logger.info(`CORS Origin used: ${corsOrigin}`);
 const app = new Hono<AppEnv>();
 
 // custom Middleware CORS, for cross-origin requests frontend to backend
-// app.use("*", async (c, next) => {
-//   // заголовки для OPTIONS запитів (preflight)
-//   if (c.req.method === "OPTIONS") {
-//     c.header("Access-Control-Allow-Origin", "http://localhost:3002");
-//     c.header("Access-Control-Allow-Methods", "POST, GET, OPTIONS");
-//     c.header(
-//       "Access-Control-Allow-Headers",
-//       "Content-Type, Authorization, X-Request-ID"
-//     );
-//     c.header("Access-Control-Max-Age", "60"); // Кешувати preflight відповідь на 60 секунд
-//     c.header("Access-Control-Allow-Credentials", "false"); // не використовує куки/сертифікати
+app.use("*", async (c, next) => {
+  // заголовки для OPTIONS запитів (preflight)
+  if (c.req.method === "OPTIONS") {
+    c.header("Access-Control-Allow-Origin", "http://localhost:3002");
+    c.header("Access-Control-Allow-Methods", "POST, GET, OPTIONS");
+    c.header(
+      "Access-Control-Allow-Headers",
+      "Content-Type, Authorization, X-Request-ID"
+    );
+    c.header("Access-Control-Max-Age", "60"); // Кешувати preflight відповідь на 60 секунд
+    c.header("Access-Control-Allow-Credentials", "true"); // використовує куки/сертифікати
+    // Логуємо, що OPTIONS запит оброблено
+    logger.info(
+      `OPTIONS request handled for origin: ${c.req.header("Origin")}`
+    );
 
-//     return c.text("", 204); // Повертаємо 204 No Content для OPTIONS
-//   }
+    return c.text("", 204); // Повертаємо 204 No Content для OPTIONS
+  }
 
-//   // Додаємо заголовки для всіх інших запитів
-//   c.header("Access-Control-Allow-Origin", corsOrigin);
-//   c.header("Access-Control-Allow-Credentials", "false");
+  // Додаємо заголовки для всіх інших запитів
+  c.header("Access-Control-Allow-Origin", corsOrigin);
+  c.header("Access-Control-Allow-Credentials", "true");
 
-//   await next();
-// });
+  await next();
+});
 
 //Hono CORS middleware
-app.use(
-  cors({
-    origin: corsOrigin, // Використовуємо змінну corsOrigin
-    credentials: true, // Важливо для передачі куків (JWT токена)
-    allowMethods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"], // Дозволені методи
-    allowHeaders: ["Content-Type", "Authorization", "X-Request-ID"], // Дозволені заголовки
-  })
-);
+// app.use(
+//   cors({
+//     origin: corsOrigin, // Використовуємо змінну corsOrigin
+//     credentials: true, // Важливо для передачі куків (JWT токена)
+//     allowMethods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"], // Дозволені методи
+//     allowHeaders: ["Content-Type", "Authorization", "X-Request-ID"], // Дозволені заголовки
+//   })
+// );
 
 // Middleware для додавання Request ID до контексту
 app.use(async (c, next) => {
@@ -92,18 +96,6 @@ app.use(async (c, next) => {
   c.set("db", knex);
   await next();
 });
-
-// ТИМЧАСОВІ OPTIONS МАРШРУТИ ДЛЯ ДІАГНОСТИКИ CORS
-app.options("/api/auth/login", (c) => {
-  logger.info("Received OPTIONS request for /api/auth/login");
-  return c.text("", 204); // Повертаємо 204 No Content
-});
-
-app.options("/api/auth/register", (c) => {
-  logger.info("Received OPTIONS request for /api/auth/register");
-  return c.text("", 204); // Повертаємо 204 No Content
-});
-// КІНЕЦЬ ТИМЧАСОВИХ OPTIONS МАРШРУТІВ
 
 // Route for health check and database connection test
 app.get("/", async (c: Context<AppEnv>) => {
