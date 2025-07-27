@@ -1,6 +1,5 @@
 const path = require("path");
 require("dotenv").config({ path: path.resolve(__dirname, "..", ".env") }); // path to  .env file
-console.log("DATABASE_URL from .env:", process.env.DATABASE_URL); // for debugging
 
 /**
  * @type { Object.<string, import("knex").Knex.Config> }
