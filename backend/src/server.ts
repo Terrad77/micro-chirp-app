@@ -45,7 +45,7 @@ const app = new Hono<AppEnv>();
 app.use("*", async (c, next) => {
   // заголовки для OPTIONS запитів (preflight)
   if (c.req.method === "OPTIONS") {
-    c.header("Access-Control-Allow-Origin", "http://localhost:3002");
+    c.header("Access-Control-Allow-Origin", corsOrigin);
     c.header("Access-Control-Allow-Methods", "POST, GET, OPTIONS");
     c.header(
       "Access-Control-Allow-Headers",
