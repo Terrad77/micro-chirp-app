@@ -12,7 +12,7 @@ const chirps = new Hono<AppEnv>();
 // middleware for unique REQUEST ID
 chirps.use("*", async (c, next) => {
   const requestId = uuidv4();
-  console.log("CHIRPS ROUTER MIDDLEWARE: Generated requestId:", requestId);
+
   c.set("requestId", requestId);
   logger.debug("Request received in chirps router", {
     requestId,
@@ -104,7 +104,7 @@ chirps.post("/", authMiddleware, async (c: Context<AppEnv>) => {
       userId,
       payload: body, // вхідні дані для дебагу
     });
-    console.error("Create chirp error:", error);
+
     return c.json(
       { message: "Server error during chirp creation", error: error.message },
       500

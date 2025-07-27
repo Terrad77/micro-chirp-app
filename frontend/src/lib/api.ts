@@ -1,4 +1,5 @@
 import axios from "axios";
+import { logger } from "@/lib/logger";
 
 // Base URL for the API requests
 const API_BASE_URL =
@@ -41,11 +42,20 @@ api.interceptors.response.use(
       error.config.url.endsWith("/auth/register");
 
     if (error.response && error.response.status === 401 && !isAuthRoute) {
-      console.warn("Unauthorized request. Logging out user.");
+      logger.warn("Unauthorized request. Logging out user.", {
+        url: error.config.url,
+        status: 401,
+        context: "axiosInterceptor",
+      });
       // Clear token and redirect to login page
       localStorage.removeItem("authToken");
       window.location.href = "/login"; // Force reload to trigger client-side auth check
     }
+    logger.error("Response interceptor error", error, {
+      url: error.config.url,
+      status: error.response?.status,
+      context: "axiosInterceptor",
+    });
     return Promise.reject(error);
   }
 );

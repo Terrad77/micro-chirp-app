@@ -8,6 +8,7 @@ import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import ChirpCard from "@/components/ChirpCard";
 import NewChirpForm from "@/components/NewChirpForm";
+import { logger } from "@/lib/logger";
 
 interface Chirp {
   id: number | string;
@@ -16,10 +17,9 @@ interface Chirp {
   created_at: string;
 }
 
-// іinterface for the mutation context
-// This will be used to store the previous chirps state before mutation
+// іinterface for the mutation context, will be used to store the previous chirps state before mutation
 interface MutationContext {
-  previousChirps: Chirp[] | undefined; // Тип для previousChirps
+  previousChirps: Chirp[] | undefined; // Type for previousChirps
 }
 
 export default function HomePage() {
@@ -29,27 +29,43 @@ export default function HomePage() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   useEffect(() => {
-    // Встановлюємо isClient, як тільки компонент монтується на клієнті
+    //set the client state to true after the component mounts
     setIsClient(true);
 
-    // Перевіряємо токен і оновлюємо стан авторизації
+    // check if the user is authenticated by validating the JWT token and set the isAuthenticated state
     const tokenIsValid = isTokenValid();
     setIsAuthenticated(tokenIsValid);
 
     if (!tokenIsValid) {
+      logger.info(
+        "User is not authenticated or token is invalid. Redirecting to login.",
+        { context: "HomePage" }
+      );
       router.push("/login");
+    } else {
+      logger.info("User is authenticated.", { context: "HomePage" });
     }
   }, [router]);
 
   // function to fetch chirps from the API
   const fetchChirps = async (): Promise<Chirp[]> => {
+    logger.debug("Fetching chirps...", { context: "HomePage" });
     const response = await api.get("/api/chirps");
+    logger.debug("Chirps fetched successfully.", {
+      count: response.data.chirps.length,
+      context: "HomePage",
+    });
     return response.data.chirps;
   };
 
   // function to create a new chirp
   const createChirp = async (content: string): Promise<Chirp> => {
+    logger.debug("Creating new chirp...", { content, context: "HomePage" });
     const response = await api.post("/api/chirps", { content });
+    logger.info("Chirp created successfully.", {
+      chirpId: response.data.chirp.id,
+      context: "HomePage",
+    });
     return response.data.chirp;
   };
 
@@ -64,7 +80,7 @@ export default function HomePage() {
     enabled: isClient && isAuthenticated,
   });
 
-  // Вказуємо тип для context у useMutation: <TData, TError, TVariables, TContext>
+  // useMutation for creating a new chirp
   const createChirpMutation = useMutation<
     Chirp,
     Error,
@@ -73,12 +89,15 @@ export default function HomePage() {
   >({
     mutationFn: createChirp,
     onMutate: async (newChirpContent) => {
+      logger.debug("Optimistically updating chirps list on mutation.", {
+        newChirpContent,
+        context: "HomePage",
+      });
       await queryClient.cancelQueries({ queryKey: ["chirps"] });
 
       const previousChirps = queryClient.getQueryData<Chirp[]>(["chirps"]);
 
-      // Optimistically update the chirps list
-      // This will immediately show the new chirp in the UI before the server confirms it was created
+      // Optimistically update the chirps list (immediately show the new chirp in the UI before the server confirms it was created
       queryClient.setQueryData(["chirps"], (oldChirps?: Chirp[]) => {
         const optimisticChirp: Chirp = {
           id: `optimistic-${Date.now()}`,
@@ -92,19 +111,26 @@ export default function HomePage() {
       return { previousChirps };
     },
     onError: (err, newChirpContent, context) => {
-      console.error("Failed to create chirp:", err);
+      logger.error("Failed to create chirp.", err, {
+        newChirpContent,
+        context: "HomePage",
+      });
       if (context?.previousChirps) {
         queryClient.setQueryData(["chirps"], context.previousChirps);
       }
       alert(`Failed to publish chirp: ${err.message}`);
     },
-    onSettled: (_data, _error, _variables, _context) => {
-      queryClient.invalidateQueries({ queryKey: ["chirps"] });
+    onSettled: () => {
+      logger.debug("Invalidating chirps query after mutation settlement.", {
+        context: "HomePage",
+      });
+      queryClient.invalidateQueries({ queryKey: ["chirps"] }); // Re-fetch chirps after mutation
     },
   });
 
   // Function to handle logout
   const handleLogout = () => {
+    logger.info("User logging out.", { context: "HomePage" });
     removeAuthToken();
     router.push("/login");
   };
@@ -123,12 +149,14 @@ export default function HomePage() {
         Downloading chirps...
       </div>
     );
-  if (isError)
+  if (isError) {
+    logger.error("Error downloading chirps.", error, { context: "HomePage" });
     return (
       <div className="flex justify-center items-center min-h-screen text-red-500">
         Error downloading chirps: {error?.message}
       </div>
     );
+  }
 
   return (
     <div className="container mx-auto p-4 max-w-lg">

@@ -6,10 +6,10 @@ enum LogLevel {
 }
 
 interface LogOptions {
-  context?: string; // назва файлу/функції
-  requestId?: string; // ID запиту для трасування
-  userId?: number; // ID користувача
-  [key: string]: any; // Додаткові дані
+  context?: string; // name of the file/function
+  requestId?: string; // request ID for tracing
+  userId?: number; // user ID
+  [key: string]: any; // Additional data
 }
 
 const isProduction = process.env.NODE_ENV === "production";
@@ -20,14 +20,14 @@ function formatLog(level: LogLevel, message: string, options?: LogOptions) {
     timestamp,
     level,
     message,
-    ...options, // додаткові опції
+    ...options, // additional options
   };
 
   if (isProduction) {
-    // У продакшені виводимо JSON для легшого парсингу лог-агрегаторами
+    // in production, log in JSON format
     console.log(JSON.stringify(logEntry));
   } else {
-    // більш читабельний формат у розробці
+    // more readable format in development
     const context = options?.context ? `[${options.context}]` : "";
     const reqId = options?.requestId ? `[ReqID: ${options.requestId}]` : "";
     const usrId = options?.userId ? `[UserID: ${options.userId}]` : "";
@@ -35,10 +35,10 @@ function formatLog(level: LogLevel, message: string, options?: LogOptions) {
     const baseLogMessage = `[${timestamp}] ${level} ${context} ${reqId} ${usrId} - ${message}`;
 
     if (options && Object.keys(options).length > 0) {
-      // Якщо є опції, виводимо їх як другий аргумент
+      // if options are provided, log them as well
       console.log(baseLogMessage, options);
     } else {
-      // Якщо опцій немає або вони порожні, виводимо тільки базове повідомлення
+      // if no options, just log the base message
       console.log(baseLogMessage);
     }
   }

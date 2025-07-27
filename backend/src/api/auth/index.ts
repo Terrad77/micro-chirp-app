@@ -11,7 +11,6 @@ const auth = new Hono<AppEnv>();
 // middleware for unique REQUEST ID
 auth.use("*", async (c, next) => {
   const requestId = uuidv4();
-  console.log("CHIRPS ROUTER MIDDLEWARE: Generated requestId:", requestId);
 
   c.set("requestId", requestId);
   logger.debug("Request received in auth router", {
@@ -106,7 +105,6 @@ auth.post("/login", async (c: Context<AppEnv>) => {
   const body = await c.req.json();
   const result = registerSchema.safeParse(body);
   const requestId = c.get("requestId") || "N/A";
-  console.log("AUTH LOGIN ROUTE: requestId before log:", requestId);
 
   if (!result.success) {
     logger.warn("Validation error during user login", {
