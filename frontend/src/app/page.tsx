@@ -26,10 +26,17 @@ export default function HomePage() {
   const queryClient = useQueryClient();
   const router = useRouter();
   const [isClient, setIsClient] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   useEffect(() => {
+    // Встановлюємо isClient, як тільки компонент монтується на клієнті
     setIsClient(true);
-    if (!isTokenValid()) {
+
+    // Перевіряємо токен і оновлюємо стан авторизації
+    const tokenIsValid = isTokenValid();
+    setIsAuthenticated(tokenIsValid);
+
+    if (!tokenIsValid) {
       router.push("/login");
     }
   }, [router]);
@@ -54,7 +61,7 @@ export default function HomePage() {
   } = useQuery<Chirp[], Error>({
     queryKey: ["chirps"],
     queryFn: fetchChirps,
-    enabled: isClient && isTokenValid(),
+    enabled: isClient && isAuthenticated,
   });
 
   // Вказуємо тип для context у useMutation: <TData, TError, TVariables, TContext>
@@ -102,7 +109,7 @@ export default function HomePage() {
     router.push("/login");
   };
 
-  if (!isClient || (isClient && !isTokenValid())) {
+  if (!isClient || !isAuthenticated) {
     return (
       <div className="flex justify-center items-center min-h-screen text-gray-700">
         Downloading...
@@ -135,7 +142,7 @@ export default function HomePage() {
         </button>
       </div>
 
-      {isTokenValid() && (
+      {isAuthenticated && (
         <NewChirpForm
           onSubmit={createChirpMutation.mutate}
           isPending={createChirpMutation.isPending}
