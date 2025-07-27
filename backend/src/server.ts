@@ -8,7 +8,7 @@ import { logger } from "./utils/logger";
 import path from "path";
 import { fileURLToPath } from "url";
 import { v4 as uuidv4 } from "uuid";
-import { cors } from "hono/cors";
+// import { cors } from "hono/cors";
 
 // Get the current directory of the file (__dirname для ESM)
 const __filename = fileURLToPath(import.meta.url); // Convert the file URL to a path
