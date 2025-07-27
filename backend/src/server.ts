@@ -51,14 +51,14 @@ app.use("*", async (c, next) => {
       "Access-Control-Allow-Headers",
       "Content-Type, Authorization, X-Request-ID"
     );
-    c.header("Access-Control-Max-Age", "86400"); // Кешувати preflight відповідь на 24 години
+    c.header("Access-Control-Max-Age", "60"); // Кешувати preflight відповідь на 60 секунд
     c.header("Access-Control-Allow-Credentials", "false"); // не використовує куки/сертифікати
 
     return c.text("", 204); // Повертаємо 204 No Content для OPTIONS
   }
 
   // Додаємо заголовки для всіх інших запитів
-  c.header("Access-Control-Allow-Origin", "http://localhost:3002");
+  c.header("Access-Control-Allow-Origin", corsOrigin);
   c.header("Access-Control-Allow-Credentials", "false");
 
   await next();
