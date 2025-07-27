@@ -93,6 +93,18 @@ app.use(async (c, next) => {
   await next();
 });
 
+// ТИМЧАСОВІ OPTIONS МАРШРУТИ ДЛЯ ДІАГНОСТИКИ CORS
+app.options("/api/auth/login", (c) => {
+  logger.info("Received OPTIONS request for /api/auth/login");
+  return c.text("", 204); // Повертаємо 204 No Content
+});
+
+app.options("/api/auth/register", (c) => {
+  logger.info("Received OPTIONS request for /api/auth/register");
+  return c.text("", 204); // Повертаємо 204 No Content
+});
+// КІНЕЦЬ ТИМЧАСОВИХ OPTIONS МАРШРУТІВ
+
 // Route for health check and database connection test
 app.get("/", async (c: Context<AppEnv>) => {
   const requestId = c.get("requestId") || "N/A";
