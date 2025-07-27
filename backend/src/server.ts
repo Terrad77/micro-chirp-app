@@ -36,6 +36,7 @@ if (!frontendUrl) {
 } else {
   corsOrigin = frontendUrl;
 }
+logger.info(`CORS Origin used: ${corsOrigin}`);
 
 // initialize Hono instance with custom AppEnv type
 const app = new Hono<AppEnv>();
