@@ -1,10 +1,10 @@
 import { Hono, type Context } from "hono";
 import { config } from "dotenv";
-import knex from "./db";
-import authRoutes from "./api/auth";
-import chirpsRoutes from "./api/chirps";
-import { type AppEnv } from "./types/appEnv";
-import { logger } from "./utils/logger";
+import knex from "./db/index.js";
+import authRoutes from "./api/auth/index.js";
+import chirpsRoutes from "./api/chirps/index.js";
+import { type AppEnv } from "./types/appEnv.js";
+import { logger } from "./utils/logger.js";
 import path from "path";
 import { fileURLToPath } from "url";
 import { v4 as uuidv4 } from "uuid";
