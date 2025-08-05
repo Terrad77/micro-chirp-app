@@ -1,38 +1,22 @@
 "use client";
 
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import api from "@/lib/api";
 import { removeAuthToken } from "@/lib/auth";
-import { getCurrentUsername, isTokenValid } from "@/lib/jwt";
+import { isTokenValid } from "@/lib/jwt";
 import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import ChirpCard from "@/components/ChirpCard";
 import NewChirpForm from "@/components/NewChirpForm";
 import { logger } from "@/lib/logger";
-
-interface Chirp {
-  id: number | string;
-  content: string;
-  author_username: string;
-  created_at: string;
-}
-
-// іinterface for the mutation context, will be used to store the previous chirps state before mutation
-interface MutationContext {
-  previousChirps: Chirp[] | undefined; // Type for previousChirps
-}
+import { useChirps } from "@/hooks/useChirps";
+import { useCreateChirp } from "@/hooks/useCreateChirp";
 
 export default function HomePage() {
-  const queryClient = useQueryClient();
   const router = useRouter();
   const [isClient, setIsClient] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   useEffect(() => {
-    //set the client state to true after the component mounts
     setIsClient(true);
-
-    // check if the user is authenticated by validating the JWT token and set the isAuthenticated state
     const tokenIsValid = isTokenValid();
     setIsAuthenticated(tokenIsValid);
 
@@ -47,88 +31,17 @@ export default function HomePage() {
     }
   }, [router]);
 
-  // function to fetch chirps from the API
-  const fetchChirps = async (): Promise<Chirp[]> => {
-    logger.debug("Fetching chirps...", { context: "HomePage" });
-    const response = await api.get("/api/chirps");
-    logger.debug("Chirps fetched successfully.", {
-      count: response.data.chirps.length,
-      context: "HomePage",
-    });
-    return response.data.chirps;
-  };
-
-  // function to create a new chirp
-  const createChirp = async (content: string): Promise<Chirp> => {
-    logger.debug("Creating new chirp...", { content, context: "HomePage" });
-    const response = await api.post("/api/chirps", { content });
-    logger.info("Chirp created successfully.", {
-      chirpId: response.data.chirp.id,
-      context: "HomePage",
-    });
-    return response.data.chirp;
-  };
-
+  // Використання кастомних хуків React Query
   const {
     data: chirps,
     isLoading,
     isError,
     error,
-  } = useQuery<Chirp[], Error>({
-    queryKey: ["chirps"],
-    queryFn: fetchChirps,
-    enabled: isClient && isAuthenticated,
-  });
+  } = useChirps(isClient && isAuthenticated);
 
-  // useMutation for creating a new chirp
-  const createChirpMutation = useMutation<
-    Chirp,
-    Error,
-    string,
-    MutationContext
-  >({
-    mutationFn: createChirp,
-    onMutate: async (newChirpContent) => {
-      logger.debug("Optimistically updating chirps list on mutation.", {
-        newChirpContent,
-        context: "HomePage",
-      });
-      await queryClient.cancelQueries({ queryKey: ["chirps"] });
+  const { mutate: createChirpMutation, isPending: isCreatingChirp } =
+    useCreateChirp();
 
-      const previousChirps = queryClient.getQueryData<Chirp[]>(["chirps"]);
-
-      // Optimistically update the chirps list (immediately show the new chirp in the UI before the server confirms it was created
-      queryClient.setQueryData(["chirps"], (oldChirps?: Chirp[]) => {
-        const optimisticChirp: Chirp = {
-          id: `optimistic-${Date.now()}`,
-          content: newChirpContent,
-          author_username: getCurrentUsername() || "Unknown User",
-          created_at: new Date().toISOString(),
-        };
-        return [optimisticChirp, ...(oldChirps || [])];
-      });
-
-      return { previousChirps };
-    },
-    onError: (err, newChirpContent, context) => {
-      logger.error("Failed to create chirp.", err, {
-        newChirpContent,
-        context: "HomePage",
-      });
-      if (context?.previousChirps) {
-        queryClient.setQueryData(["chirps"], context.previousChirps);
-      }
-      alert(`Failed to publish chirp: ${err.message}`);
-    },
-    onSettled: () => {
-      logger.debug("Invalidating chirps query after mutation settlement.", {
-        context: "HomePage",
-      });
-      queryClient.invalidateQueries({ queryKey: ["chirps"] }); // Re-fetch chirps after mutation
-    },
-  });
-
-  // Function to handle logout
   const handleLogout = () => {
     logger.info("User logging out.", { context: "HomePage" });
     removeAuthToken();
@@ -172,8 +85,8 @@ export default function HomePage() {
 
       {isAuthenticated && (
         <NewChirpForm
-          onSubmit={createChirpMutation.mutate}
-          isPending={createChirpMutation.isPending}
+          onSubmit={createChirpMutation}
+          isPending={isCreatingChirp}
         />
       )}
 

@@ -1,9 +1,13 @@
 import { Hono, type Context } from "hono";
 import { z } from "zod";
-import knex from "../../db";
-import { hashPassword, comparePassword, generateToken } from "../../utils/auth";
-import { type AppEnv } from "../../types/appEnv";
-import { logger } from "../../utils/logger";
+import knex from "../../db/index.js";
+import {
+  hashPassword,
+  comparePassword,
+  generateToken,
+} from "../../utils/auth.js";
+import { type AppEnv } from "../../types/appEnv.js";
+import { logger } from "../../utils/logger.js";
 import { v4 as uuidv4 } from "uuid";
 
 const auth = new Hono<AppEnv>();
